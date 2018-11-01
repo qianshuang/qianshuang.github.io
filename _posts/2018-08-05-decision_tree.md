@@ -1,7 +1,4 @@
 ---
-youku_id: XMTI4OTI0NDEwNA
-youtube_id: 28
-bilibili_id: 34095986&page=1
 layout:     post   				    # 使用的布局
 title:      02.0 决策树 				# 标题 
 # subtitle:   Hello World, Hello Blog # 副标题
