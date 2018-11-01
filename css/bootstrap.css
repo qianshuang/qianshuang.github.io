@@ -5,6 +5,97 @@
  */
 
 /*! normalize.css v3.0.2 | MIT License | git.io/normalize */
+/* ====== main body ====== */
+main {
+margin: 0 auto;
+}
+
+.pad-main {
+padding: 3em 4em;
+}
+
+
+/* ====== video ===== */
+.video-container {
+z-index: 4;
+position: relative;
+padding-bottom: 56.25%;
+padding-top:0;
+margin: 0;
+
+}
+
+.video-container iframe, .video-container object, .video-container embed {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+}
+/* ===================== less than 800px ==================== */
+/* ======= tutorial content menu ========= */
+@media screen and (max-width: 800px) {
+  .tut-content-menu {
+  right: 1em;
+  }
+  main, main .tut-post-main {
+  width: 100%;
+  }
+  .tut-right-bar, .mobile-hid {
+  display: none;
+  }
+  main .video-container, main .video-container iframe, main .video-container object, main .video-container embed {
+  max-width: 100%;
+  margin: 0 auto;
+  }
+}
+
+
+
+
+/* ===================== more than 800px ==================== */
+/* ====== video ===== */
+@media screen and (min-width: 800px) {
+  main .video-container, main .video-container iframe, main .video-container object, main .video-container embed {
+  max-width: 800px;
+  margin: 0 auto;
+  }
+  main {
+    width: 800px;
+  }
+  main.tut-main {
+  margin: 0;
+  }
+  .tut-content-menu {
+  display: none;
+  }
+}
+
+@media screen and (min-width: 800px and max-width: 1000px) {
+  main.tut-main {
+    width: 100%;
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  main.tut-main {
+    width: 1000px;
+    margin: 0 auto;
+  }
+}
+.section {
+box-shadow: 0px 0px 5px #888888;
+background-color:#FAFAFA;
+filter: none !important;
+margin: 0.5em 0;
+}
+
+
+
+
+
+
+
 html {
   font-family: sans-serif;
   -webkit-text-size-adjust: 100%;

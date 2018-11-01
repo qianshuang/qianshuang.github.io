@@ -47,11 +47,18 @@ layout: default
     </div>
 </header>
 
+
+
 <!-- Post Content -->
 <article>
-    <div class="container">
-        <div class="row">
 
+<!-- video section -->
+	<script src="{{ "/js/video-select.js " | prepend: site.baseurl }}"></script>
+    <div class="section ie-size" style="box-shadow: 0px 0px 5px #888888;background-color:#FAFAFA;filter: none !important; margin: auto;
+    width: 64%;">
+      <!-- video section -->
+      {% include embedded-video.html %}
+    </div>
     <!-- Post Container -->
             <div class="
                 col-lg-8 col-lg-offset-2
@@ -167,7 +174,13 @@ layout: default
         </div>
     </div>
 </article>
+<!-- donation -->
+        <div id="bottom-donation-section" style="margin-left: 16%;">
+          {% include share-donate.html %}
+        </div>
 
+        <hr>
+      </div>
 
 {% if site.disqus_username %}
 <!-- disqus 公共JS代码 start (一个网页只需插入一次) -->

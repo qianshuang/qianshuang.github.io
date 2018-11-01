@@ -40,3 +40,20 @@ description: "每一次不一样都来自一个勇敢的开始"
     {% endif %}
 </ul>
 {% endif %}
+<!--数字分页-->
+<div class="numberpager" style="text-align: center;">
+{% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+      <span style="margin-left: 2%;color: blue;text-decoration: underline;" class="active">{{ page }}</span>
+    {% elsif page == 1 %}
+      <a style="margin-left: 2%;" href="{{ '/index.html' | prepend: site.baseurl | replace: '//', '/' }}">{{ page }}</a>
+    {% else %}
+      <a style="margin-left: 2%;" href="{{ site.paginate_path | prepend: site.baseurl | replace: '//', '/' | replace: ':num', page }}">{{ page }}</a>
+    {% endif %}
+{% endfor %}
+
+
+{% if paginator.next_page %}
+    <a style="margin-left: 2%;" href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}"></a>
+{% endif %}
+</div>

@@ -1,5 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
+<style>
+	p#back-to-top{
+    position:fixed;
+    display:none;
+    bottom:10%;
+    right:8%;
+}
+p#back-to-top a{
+    text-align:center;
+    text-decoration:none;
+    color:#d1d1d1;
+    display:block;
+    width:auto;
+    /*使用CSS3中的transition属性给跳转链接中的文字添加渐变效果*/
+    -moz-transition:color 1s;
+    -webkit-transition:color 1s;
+    -o-transition:color 1s;
+}
+p#back-to-top a:hover{
+    color:#979797;
+}
+p#back-to-top a span{
+    background:transparent url(/img/top.png?1202) no-repeat 45%;
+    border-radius:0.6%;
+    display:block;
+    height:3em;
+    width:5em;
+    margin-bottom:7%;
+    /*使用CSS3中的transition属性给<span>标签背景颜色添加渐变效果*/
+    -moz-transition:background 1s;
+    -webkit-transition:background 1s;
+    -o-transition:background 1s;
+}
+#back-to-top a:hover span{
+    background:transparent url(/img/top.png?1202) no-repeat -25em -290em;
+}
+</style>
+<script src="https://ajax.microsoft.com/ajax/jQuery/jquery-1.7.2.min.js"></script>
+<script>
+$(function(){
+        //当滚动条的位置处于距顶部100像素以下时，跳转链接出现，否则消失
+        $(function () {
+            $(window).scroll(function(){
+                if ($(window).scrollTop()>100){
+                    $("#back-to-top").fadeIn(1500);
+                }
+                else
+                {
+                    $("#back-to-top").fadeOut(1500);
+                }
+            });
+
+            //当点击跳转链接后，回到页面顶部位置
+            $("#back-to-top").click(function(){
+                //$('body,html').animate({scrollTop:0},1000);
+        if ($('html').scrollTop()) {
+                $('html').animate({ scrollTop: 0 }, 1000);
+                return false;
+            }
+            $('body').animate({ scrollTop: 0 }, 1000);
+                 return false;            
+           });       
+     });    
+});
+</script>
 
 {% include head.html %}
 
@@ -13,9 +78,7 @@
     {% include footer.html %}
 
 
-<!-- Image to hack wechat -->
-<img src="/img/apple-touch-icon.png" width="0" height="0" />
-<!-- Migrate from head to bottom, no longer block render and still work -->
+<span style="font-size:14px"><p id="back-to-top"><a href="#top"><span style="background-size: contain;"></span>返回顶部</a></p></span>
 
 </body>
 
