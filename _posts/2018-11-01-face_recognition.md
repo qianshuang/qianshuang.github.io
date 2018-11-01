@@ -150,6 +150,7 @@ for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodi
 	train_op = slim.learning.create_train_op(loss, optimizer)
 	probabilities = tf.nn.softmax(logits)
 	```
+4. 模型训练完成后，就可以在线调用模型提供的人脸识别服务，完成人脸识别任务了。
 
 参考资料：
 - <a href="https://github.com/vipstone/faceai" target="_blank">vipstone_faceai</a>
