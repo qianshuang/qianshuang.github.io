@@ -55,6 +55,7 @@ Global Attention和Local Attention各有优劣，在实际应用中，Global Att
 ## Self Attention
 
 传统的Attention是基于source端和target端的隐变量（hidden state）计算Attention的，得到的结果是源端的每个词与目标端每个词之间的对其关系。Self Attention是计算自身与自身相关的Self Attention，即捕捉自身的词与词之间的对其关系。并能更有效的捕捉句子内部的长距离依赖关系。
+![Attention](/img/Attention-09.png)
 
 ### single-head Self Attention
 
@@ -73,9 +74,12 @@ atten_output = tf.reduce_sum(tf.multiply(inputs, alpha), axis=1)  #(?, 100)
 ![Attention](/img/Attention-08.png)
 如上图左所示，首先把输入Input经过三个不同的线性变换分别得到Q、K、V，然后把Q和K做dot Product相乘（矩阵乘法），得到输入Input词与词之间的对其关系，然后经过尺度变换（scale）、掩码（mask）和softmax操作，得到最终的Self Attention矩阵。尺度变换是为了防止输入值过大导致训练不稳定，mask则是为了将Padding的内容过滤掉。（有点类似于LSTM的门操作）
 
-# position embedding
+# position embedding & Transformer
 
-position embedding技术在很多任务上表现出了非常不错的效果，一般与CNN配合使用，将每个词出现的位置进行embedding，与Word embedding一起作为输入进行卷积操作。这样使CNN与RNN一样，能够表达位置关系和时序性。
+position embedding技术在很多任务上表现出了非常不错的效果，一般与CNN配合使用，将每个词出现的位置进行embedding，与Word embedding一起作为输入进行卷积操作，这样使CNN与RNN一样，能够表达位置关系和时序性。
+
+Transformer编码器由Google发明，在其发表的论文《Attention is all you need》中进行了详细介绍，核心其实就是利用了position embedding和multi-head Self Attention，它完全舍弃了RNN的循环式网络结构，完全基于自注意力机制来对一段文本进行建模。Transformer所使用的注意力机制的核心思想是去计算一句话中的每个词对于这句话中所有词的相互关系，然后认为这些词与词之间的相互关系在一定程度上反应了这句话中不同词之间的关联性以及重要程度，因此再利用这些相互关系来调整每个词的重要性（权重）就可以获得每个词新的表达。这个新的表征不但蕴含了该词本身，还蕴含了其他词与这个词的关系，因此和单纯的词向量相比是一个更加全局的表达。Transformer通过对输入的文本不断进行这样的注意力机制层和普通的非线性层交叠来得到最终的文本表达。Transformer模型架构如下所示：
+![Attention](/img/Attention-10.png)
 
 # 模型训练
 

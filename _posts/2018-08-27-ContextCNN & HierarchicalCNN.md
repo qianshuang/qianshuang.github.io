@@ -36,7 +36,7 @@ h_conv_1 = tf.nn.relu(conv_1)
 
 ## HierarchicalCNN
 
-HierarchicalCNN即分层的CNN模型，它也是一种效果不错的基于上下文的CNN模型，它也是先将文本拆成一个个语义完整的句子，然后先在每个句子上做卷积操作，提取每个句子中词与词之间的N-gram特征，最终得到每个句子的representation，然后再将每个句子的representation做stack，组成每一篇文章，继续使用CNN操作提取每篇文章中句与句之间的N-gram特征，最终得到每篇文章的representation。
+HierarchicalCNN即分层的CNN模型，它也是一种效果不错的基于上下文的CNN模型，它也是先将文本拆成一个个语义完整的句子，然后先在每个句子上做卷积操作，提取每个句子中词与词之间的N-gram特征，最终得到每个句子的representation，然后再将每个句子的representation做stack，组成每一篇文章，继续使用CNN操作提取每篇文章中句与句之间的N-gram特征，最终得到每篇文章的representation。简单来说，底层CNN提取更多的是syntax特征，顶层CNN提取更多的是semantics特征。
 ![HCNN](/img/HCNN-02.png)
 ```
 input_x = tf.placeholder(tf.int32, [None, self.config.text_length, self.config.sentence_length], name='input_x')
