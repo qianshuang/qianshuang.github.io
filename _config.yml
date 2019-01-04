@@ -1,10 +1,10 @@
 # Site settings
-title: 子颢's Blog
-SEOTitle: 子颢的博客 | 子颢's Blog
+title: 钱爽's Blog
+SEOTitle: 钱爽的博客 | 钱爽's Blog
 # header-img: img/post-bg-desk.jpg
 email: 2009qianshuang@163.com
 description: "每一次不一样都来自一个勇敢的开始"
-keyword: "zihao, 子颢, 子颢的博客, 机器学习, 深度学习, tensorflow, 阿里巴巴, 百度, 腾讯"
+keyword: "钱爽, 子颢, 钱爽的博客, 机器学习, 深度学习, tensorflow, 阿里巴巴, 百度, 腾讯"
 url: "https://qianshuang.github.io"          # your host, for absolute URL
 baseurl: ""      # for example, '/blog' if your blog hosted on 'host/blog'
 github_repo: "https://github.com/qianshuang/qianshuang.github.io.git" # you code repository
