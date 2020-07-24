@@ -25,28 +25,28 @@ Decoder和Encoder的结构类似，只是多了一层multi-head attention sub-la
 
 # Positional Encoding
 
-Transformer抛弃了RNN，而RNN最大的优点就是在时间序列上对数据的抽象，而Transformer又是一种完全由CNN、MLP + Attention的架构，是一种位置不敏感的模型，虽然self-Attention能提取词与词之间的依赖关系，但是却不能提取词的绝对位置或者相对位置关系，所以作者提出将Positional Encoding之后与Word embedding做Concat，以加入相对位置信息。这里主要介绍三种常用的Positional Encoding方法：
+Transformer抛弃了RNN，而RNN最大的优点就是在时间序列上对数据的抽象，而Transformer又是一种完全由CNN、MLP + Attention的架构，是一种位置不敏感的模型，虽然self-Attention能提取词与词之间的依赖关系，但是却不能提取词的绝对位置或者相对位置关系，所以作者提出将Positional Encoding之后与Word embedding做sum，以加入相对位置信息。这里主要介绍三种常用的Positional Encoding方法。
 
-1. 直接使用位置的one-hot编码
+## 直接使用位置的one-hot编码
+
 ![transformer](/img/transformer-02.png)
 这种方式形式简单易于理解，但是one-hot编码始终不具备语义化的数值表达，并且当sequence length过长时，one-hot编码过于稀疏，而且Word embedding与one-hot向量并不在同一数值空间内，所以一般情况下效果并不太好。
-2. learned position embedding
+
+## learned position embedding
 
 ```
-# Word embedding
 word_embedding = tf.get_variable('word_embedding', [self.config.vocab_size, self.config.word_embedding_size])
 word_embedding_inputs = tf.nn.embedding_lookup(word_embedding, self.input_x_word_idx)
 
-# Position embedding
 position_embedding = tf.get_variable('position_embedding', [self.config.seq_length, self.config.position_embedding_size])
 position_embedding_inputs = tf.nn.embedding_lookup(position_embedding, self.input_x_position_idx)
 
-# concat
 embedding_inputs = tf.sum([word_embedding_inputs, position_embedding_inputs], -1)
 ```
-
 这是比较常用的方式，类似于Word embedding，使position也具备了语义化的数值表达。注意：keep dim 0 for padding token，and then position encoding zero vector。
-3. sinusoidal position encoding
+
+## sinusoidal position encoding
+
 sinusoidal position encoding的计算公式如下所示，公式并不复杂：
 ![transformer](/img/transformer-03.png)
 pos表示位置，dmodel表示position encoding的向量维度，i表示向量的第i个位置元素（i取值范围为[0,dmodel/2]）。因此上述公式表示position encoding向量的偶数位置元素为sin值，奇数位置为cos值，并以此计算出整个position encoding向量。
@@ -59,7 +59,7 @@ sin编码和cos编码之所以可以得到词语之间的相对位置，是因�
 multi-head attention是transformer的核心，模型图如下所示，也比较简单直观：
 ![transformer](/img/transformer-04.jpg)
 
-1. Scaled Dot-Product Attention
+## Scaled Dot-Product Attention
 
 我们知道Attention的计算公式为：
 ![transformer](/img/transformer-05.png)
@@ -67,11 +67,10 @@ multi-head attention是transformer的核心，模型图如下所示，也比较�
 ![transformer](/img/transformer-06.png)
 对于self-attention，一方面能够很好地捕捉句子内部的长距离依赖，学习到句子的内部结构及语法，另一方面与单纯的词向量比，是一种更全局的表达。
 
-2. Multi-Head Attention
+## Multi-Head Attention
 
 即分别对Q、K、V进行h次不同的线性变换（h为head数），在每次线性变换中，对Q、K、V又都使用不同的权重矩阵（所以一共使用了3h个不同的权重矩阵），然后对每次线性变换的结果计算Attention，再将不同的attention结果拼接起来，最后再经过一次总的线性变换（h头线性变换的权重矩阵维度为dk/h，这样h头最后一维拼接后维度即还原为dk）。
 ![transformer](/img/transformer-07.png)
-
 ```
 self.W=self.add_weight(name='W',
     shape=(self.num_head,3,input_shape[2],self.output_dim),
@@ -92,7 +91,6 @@ for i in range(1,self.W.shape[0]):
     outputs=K.concatenate([outputs,o]) # 最后一维上做拼接
 z=K.dot(outputs,self.Wo)
 ```
-
 为什么要使用Multi-Head Attention呢？
 其实Multi-Head Attention类似与卷积中的多个卷积核，在卷积神经网络中，我们认为不同的卷积核会捕获不同的局部信息，得到不同的feature map，在这里也是一样，我们认为Multi-Head Attention可以让模型从不同角度理解输入的序列。因为在进行映射时不共享权值，因此映射后的子空间是不同的，认为不同的子空间涵盖的信息是不一样的，这样最后拼接的向量涵盖的信息会更广。
 
