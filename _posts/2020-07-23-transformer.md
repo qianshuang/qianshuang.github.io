@@ -19,9 +19,9 @@ Transformer模型出自于Google在2017年的一篇论文《Attention Is All You
 首先看左边的encoder部分，Nx表示有N层这样的Layer，每个Layer由两个sub-layer组成，分别是multi-head self-attention mechanism和fully-connected feed forward network。其中每个sub-layer都加了residual connection和normalisation。输入部分是Word Embedding和position Embedding的按位sum。
 
 Decoder和Encoder的结构类似，只是多了一层multi-head attention sub-layer，这里先明确一下decoder的输入输出和解码过程：
-输出：对应i位置的输出词的概率分布。
-输入：encoder的输出 & 对应i-1位置decoder的输出。所以第二层的attention不是self-attention，它的KV来自encoder，Q来自上一位置decoder的输出。
-masked multi-head Attention：第一个multi-head attention多加了一个mask，主要有两层作用：一是CNN的输入需要做Padding，由于Padding部分是无意义的，这个时候不能与position embedding做sum，所以需要将position embedding部分也mask为全零；二是因为训练时的output都是ground truth，所以需要将所预测的第i个位置之后的词统统mask掉，以确保预测第i个位置时不会接触到未来的信息。因为attention的Q要和每个K相乘，如果你在预测的时候允许模型接触到这个值，数据就泄露了。
+1. 输出：对应i位置的输出词的概率分布。
+2. 输入：encoder的输出 & 对应i-1位置decoder的输出。所以第二层的attention不是self-attention，它的KV来自encoder，Q来自上一位置decoder的输出。
+3. masked multi-head Attention：第一个multi-head attention多加了一个mask，主要有两层作用：一是CNN的输入需要做Padding，由于Padding部分是无意义的，这个时候不能与position embedding做sum，所以需要将position embedding部分也mask为全零；二是因为训练时的output都是ground truth，所以需要将所预测的第i个位置之后的词统统mask掉，以确保预测第i个位置时不会接触到未来的信息。因为attention的Q要和每个K相乘，如果你在预测的时候允许模型接触到这个值，数据就泄露了。
 
 # Positional Encoding
 
@@ -31,6 +31,7 @@ Transformer抛弃了RNN，而RNN最大的优点就是在时间序列上对数据
 ![transformer](/img/transformer-02.png)
 这种方式形式简单易于理解，但是one-hot编码始终不具备语义化的数值表达，并且当sequence length过长时，one-hot编码过于稀疏，而且Word embedding与one-hot向量并不在同一数值空间内，所以一般情况下效果并不太好。
 2. learned position embedding
+
 ```
 # Word embedding
 word_embedding = tf.get_variable('word_embedding', [self.config.vocab_size, self.config.word_embedding_size])
@@ -43,6 +44,7 @@ position_embedding_inputs = tf.nn.embedding_lookup(position_embedding, self.inpu
 # concat
 embedding_inputs = tf.sum([word_embedding_inputs, position_embedding_inputs], -1)
 ```
+
 这是比较常用的方式，类似于Word embedding，使position也具备了语义化的数值表达。注意：keep dim 0 for padding token，and then position encoding zero vector。
 3. sinusoidal position encoding
 sinusoidal position encoding的计算公式如下所示，公式并不复杂：
@@ -69,6 +71,7 @@ multi-head attention是transformer的核心，模型图如下所示，也比较�
 
 即分别对Q、K、V进行h次不同的线性变换（h为head数），在每次线性变换中，对Q、K、V又都使用不同的权重矩阵（所以一共使用了3h个不同的权重矩阵），然后对每次线性变换的结果计算Attention，再将不同的attention结果拼接起来，最后再经过一次总的线性变换（h头线性变换的权重矩阵维度为dk/h，这样h头最后一维拼接后维度即还原为dk）。
 ![transformer](/img/transformer-07.png)
+
 ```
 self.W=self.add_weight(name='W',
     shape=(self.num_head,3,input_shape[2],self.output_dim),
@@ -89,6 +92,7 @@ for i in range(1,self.W.shape[0]):
     outputs=K.concatenate([outputs,o]) # 最后一维上做拼接
 z=K.dot(outputs,self.Wo)
 ```
+
 为什么要使用Multi-Head Attention呢？
 其实Multi-Head Attention类似与卷积中的多个卷积核，在卷积神经网络中，我们认为不同的卷积核会捕获不同的局部信息，得到不同的feature map，在这里也是一样，我们认为Multi-Head Attention可以让模型从不同角度理解输入的序列。因为在进行映射时不共享权值，因此映射后的子空间是不同的，认为不同的子空间涵盖的信息是不一样的，这样最后拼接的向量涵盖的信息会更广。
 
