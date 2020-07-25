@@ -50,8 +50,11 @@ embedding_inputs = tf.sum([word_embedding_inputs, position_embedding_inputs], -1
 sinusoidal position encoding的计算公式如下所示，公式并不复杂：
 ![transformer](/img/transformer-03.png)
 pos表示位置，dmodel表示position encoding的向量维度，i表示向量的第i个位置元素（i取值范围为[0,dmodel/2]）。因此上述公式表示position encoding向量的偶数位置元素为sin值，奇数位置为cos值，并以此计算出整个position encoding向量。
+
 这是一种相对位置编码，而Word embedding是绝对位置编码。大家试想一下，位置1和位置2的距离比位置3和位置10的距离更近，位置1和位置2与位置3和位置4都只相差1，这些关于位置的相对含义 如果仅通过绝对位置编码模型不一定能get到，因为使用Learned Positional Embedding编码，位置之间没有约束关系，我们只能期待它隐式地学到，而sinusoidal position encoding能够显示的让模型理解位置的相对关系。另外论文上说sinusoidal position encoding并不受限于序列长度，其可以在遇到训练集中未出现过的序列长度时仍能很好的“extrapolate”，即sinusoidal position encoding可以无限扩展到任意长度，但是这种解释有点牵强，因为在实际使用上过长的数据还是都被截断了的。
+
 sin编码和cos编码之所以可以得到词语之间的相对位置，是因为PE(pos+k)可以被PEpos线性表示，感兴趣的同学可以证明一下，当pos分别取3和4的时候，PE4怎样由PE3线性表示。
+
 （其实CNN也能提取到句子内部词与词之间的相对位置关系，但是受限于卷积核的大小，需要多层CNN解决）
 
 # Attention
@@ -101,6 +104,8 @@ z=K.dot(outputs,self.Wo)
 # LayerNorm
 
 LN是和BN非常近似的一种归一化方法，不同的是BN取的是不同样本的同一个特征做归一化，而LN取的是同一个样本的不同特征。在BN和LN都能使用的场景中，BN的效果一般优于LN，原因是基于不同数据，同一特征得到的归一化特征更不容易损失信息。但是有些场景是不能使用BN的，当样本数很少时，比如说只有4个，这4个样本的均值和方差便不能反映全局的统计分布信息，所以基于少量样本的BN的效果会变得很差。在一些场景中，比如说硬件资源受限、RNN、在线学习等场景，BN是非常不适用的。这时候可以选择使用LN，LN得到的模型更稳定且能起到正则化的作用，并且LN将每个训练样本都归一化到了相同的分布上，所以从原理上讲，LN还能加速收敛。
+
+具体就是，LN可以缓解Internal Covariate Shift问题，可以将数据分布拉到激活函数的非饱和区，具有权重/数据伸缩不变性的特点。起到缓解梯度消失/爆炸、加速训练、正则化的效果。
 
 RNN可以展开成一个隐藏层共享参数的MLP，随着时间片的增多，展开后的MLP的层数也在增多，最终层数由输入数据的时间片的数量决定，所以RNN是一个动态的网络。在一个batch中，通常各个样本的长度都是不同的，当统计到比较靠后的时间片时，通常只有某几个样本还有数据，基于这几个样本的统计信息不能反映全局分布，所以这时BN的效果并不好。
 
