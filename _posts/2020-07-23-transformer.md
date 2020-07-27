@@ -64,6 +64,8 @@ multi-head attention是transformer的核心，模型图如下所示，也比较�
 
 ## Scaled Dot-Product Attention
 
+MLP难以学习向量内积以及特征组合变换（特征相乘），这也是为什么QQ-match模型最后必须用余弦相似度（向量内积）而不用MLP二分类来计算损失函数的原因，因为MLP二分类损失函数效果极差。
+
 我们知道Attention的计算公式为：
 ![transformer](/img/transformer-05.png)
 其中Lx代表source中句子的sequence length。其实如果相似度计算使用向量点积的话，上式就变成了[softmax(Q · KT)] · V，然而点积的方法面临一个问题，假设K、Q的向量元素都是均值为0方差为1，那么当向量维度太大时，点积计算得到的内积结果会出现两极分化，这样在计算softmax时，结果都非常接近0和1，这样可能会导致梯度过小或消失，因此对向量内积除以根号下dk（dk是向量维度）来对内积结果进行缩放，这就是Scaled Dot-Product Attention：
