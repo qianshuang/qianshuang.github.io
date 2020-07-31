@@ -1,6 +1,6 @@
 ---
 layout:     post   				    # 使用的布局
-title:      55.0 DeepFM	& DCN		# 标题 
+title:      55.0 基于深度学习的推荐系统——DeepFM & DCN		# 标题 
 date:       2020-07-27  			# 时间
 author:     钱爽 						# 作者
 catalog: true 						# 是否归档
@@ -93,7 +93,7 @@ optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(loss)
 
 # DCN
 
-在DeepFM中，FM部分只用到了2-order的特征交互，deep部分由于是隐式的构造cross features，所以对于某些类型的特征交互，并不能有效的学习。DCN（Deep & Cross Network），仍然和DeepFM一样沿用wide & deep架构，deep部分仍然是MLP捕获高纬度非线性特征交互，而wide部分改成了Cross Network，其每一层显示应用了特征交叉，事实上，正式由于Cross Network的特殊网络结构，使得the degree of cross features to grow with layer depth。DCN模型架构如下所示：
+在DeepFM中，FM部分只用到了2-order的特征交互，deep部分由于是隐式的构造cross features，所以对于某些类型的特征交互，并不能有效的学习。DCN（Deep & Cross Network），仍然和DeepFM一样沿用wide & deep架构，deep部分仍然是MLP捕获高纬度非线性特征交互，而wide部分改成了Cross Network，其每一层显示应用了特征交叉，事实上，正是由于Cross Network的特殊网络结构，使得the degree of cross features to grow with layer depth。DCN模型架构如下所示：
 ![DCN](/img/DCN-01.png)
 
 ## Cross Network
@@ -104,7 +104,7 @@ Cross Network的关键思想就是，通过一种高效的递归方式显示的m
 ![DCN](/img/DCN-03.png)
 可以看到X1包含了原始特征x01,x02从一阶到二阶的所有可能的交叉组合，而X2包含了原始特征x01,x02从一阶到三阶的所有可能的交叉组合，但是每层也只引入了两个参数。随着网络层数的不断加深，也就包含了更加高阶的所有可能的交叉组合，但是网络参数也只是线性增长，而不是指数增长。综上，Cross Network的特性如下：
 1. 有限高阶。叉乘阶数由网络深度决定，深度Lc对应最高Lc+1阶的叉乘。
-2. 自动叉乘。Cross Network的输出包含了原始特征从一阶（即本身）到Lc+1阶的所有叉乘组合，而模型参数量仅仅随网络深度成线性增长：2∗d∗Lc，d为特征数量。
+2. 自动叉乘。Cross Network的输出包含了原始特征从一阶（即本身）到Lc+1阶的所有叉乘组合，而模型参数量仅仅随网络深度成线性增长：2 x d x Lc，d为特征数量。
 ​3. 参数共享。不同叉乘项对应的权重不同，但并非每个叉乘组合对应独立的权重（否则，指数数量将是指数级），通过参数共享，有效降低了Cross Network的参数量。
 4. 泛化性。参数共享还使得模型有更强的泛化性和鲁棒性。例如，如果独立训练权重（不共享参数），当训练集中xi≠0⋂xj≠0x这个叉乘特征没有出现，那么对应权重肯定是零，而参数共享则不会使得其为0，这样使得预测时能够有效应对训练集中没有出现的叉乘组合。
 
