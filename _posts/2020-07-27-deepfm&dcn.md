@@ -8,8 +8,6 @@ tags:								# 标签
     - 推荐系统
 ---
 
-# DeepFM
-
 FM(Factorization Machine，因子分解机)主要是为了解决数据稀疏的情况下，特征两两组合的问题。后人基于FM模型结合深度学习，进行了很多尝试，比如：
 1. FNN（Factorization-machine supported Neural
 Network），该模型先预训练FM，然后把得到的隐向量作为embedding的初始值，应用到DNN网络，因此该模型严重受限于FM的能力，并且FM的误差会级联传递下去。
@@ -18,7 +16,7 @@ Network），该模型先预训练FM，然后把得到的隐向量作为embeddin
 
 DeepFM（Factorization-Machine based neural network）模型能够端到端的学习all-order的特征交互，而不需要任何特征工程（一个特征叫1-order，两个特征cross叫2-order，n个特征cross叫n-order）。它通过将FM与DNN集成，FM负责model low-order特征交互，DNN负责model high-order特征交互。
 
-## 模型架构
+# 模型架构
 
 ![DeepFM](/img/deepfm-01.png)
 Addition其实代表concat。
@@ -39,7 +37,7 @@ FM部分与DNN部分共享同样的特征embedding，FM中的特征隐向量V同
 
 下面我们将结合代码进行讲解。
 
-### 输入层
+## 输入层
 ```
 #feat_index是特征的一个序号，主要用于通过embedding_lookup选择我们的embedding。
 feat_index = tf.placeholder(tf.int32, shape=[None,field_size], name='feat_index')
@@ -48,7 +46,7 @@ feat_value = tf.placeholder(tf.float32, shape=[None,field_size], name='feat_valu
 label = tf.placeholder(tf.float32,shape=[None,1], name='label')
 ```
 
-### embedding层
+## embedding层
 ```
 #weights['feature_embeddings']矩阵中的每一行其实就是FM中的Vik，他的shape是f x k。f为所有特征one-hot后的总大小，K代表dense vector的维度。
 weights['feature_embeddings'] = tf.Variable(tf.random_normal([feature_size,embedding_size],0.0,0.01))
@@ -62,13 +60,13 @@ feat_value = tf.reshape(feat_value,shape=[-1,field_size,1])
 embeddings = tf.multiply(embeddings,feat_value)
 ```
 
-### DNN part
+## DNN part
 ```
 y_deep = tf.reshape(embeddings, shape=[-1,self.field_size * self.embedding_size]) #Flatten
 y_deep = tf.layers.dense(y_deep, activation="relu", use_bias=True)
 ```
 
-### FM part
+## FM part
 ```
 # 1-order
 y_first_order = tf.nn.embedding_lookup(weights['feature_bias'],feat_index)
@@ -84,7 +82,7 @@ squared_sum_features_emb = tf.reduce_sum(squared_features_emb,1) # None * k
 fm_second_order = 0.5 * tf.subtract(summed_features_emb_square,squared_sum_features_emb)
 ```
 
-### 训练
+## 训练
 ```
 concat_input = tf.concat([y_first_order, y_second_order, y_deep], axis=1)
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=label))
@@ -95,47 +93,3 @@ optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(loss)
 
 在DeepFM中，FM部分只用到了2-order的特征交互，deep部分由于是隐式的构造cross features，所以对于某些类型的特征交互，并不能有效的学习。DCN（Deep & Cross Network），仍然和DeepFM一样沿用wide & deep架构，deep部分仍然是MLP捕获高纬度非线性特征交互，而wide部分改成了Cross Network，其每一层显示应用了特征交叉，事实上，正式由于Cross Network的特殊网络结构，使得the degree of cross features to grow with layer depth。DCN模型架构如下所示：
 ![DCN](/img/DCN-01.png)
-
-## Cross Network
-
-Cross Network的关键思想就是，通过一种高效的递归方式显示的model线性特征交叉，公式如下所示：
-![DCN](/img/DCN-02.png)
-这样层层递归下去，并且上下层特征通过残差网络相连接。论文中的定理与证明过程都比较晦涩，为了直观清晰地讲解清楚，我们直接看一个具体的例子：假设Cross Network有2层，
-![DCN](/img/DCN-03.png)
-可以看到X1包含了原始特征x01,x02从一阶到二阶的所有可能的交叉组合，而X2包含了原始特征x01,x02从一阶到三阶的所有可能的交叉组合，但是每层也只引入了两个参数。随着网络层数的不断加深，也就包含了更加高阶的所有可能的交叉组合，但是网络参数也只是线性增长，而不是指数增长。综上，Cross Network的特性如下：
-1. 有限高阶。叉乘阶数由网络深度决定，深度Lc对应最高Lc+1阶的叉乘。
-2. 自动叉乘。Cross Network的输出包含了原始特征从一阶（即本身）到Lc+1阶的所有叉乘组合，而模型参数量仅仅随网络深度成线性增长：2∗d∗Lc，d为特征数量。
-​3. 参数共享。不同叉乘项对应的权重不同，但并非每个叉乘组合对应独立的权重（否则，指数数量将是指数级），通过参数共享，有效降低了Cross Network的参数量。
-4. 泛化性。参数共享还使得模型有更强的泛化性和鲁棒性。例如，如果独立训练权重（不共享参数），当训练集中xi≠0⋂xj≠0x这个叉乘特征没有出现，那么对应权重肯定是零，而参数共享则不会使得其为0，这样使得预测时能够有效应对训练集中没有出现的叉乘组合。
-
-DCN核心代码如下：
-```
-#输入层
-self.feat_index = tf.placeholder(tf.int32,shape=[None,None],name='feat_index')
-self.feat_value = tf.placeholder(tf.float32,shape=[None,None],name='feat_value')
-self.numeric_value = tf.placeholder(tf.float32,[None,None],name='num_value')
-self.label = tf.placeholder(tf.float32,shape=[None,1],name='label')
-
-#embedding & concat
-self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'],self.feat_index) # N * F * K
-feat_value = tf.reshape(self.feat_value,shape=[-1,self.field_size,1])
-self.embeddings = tf.multiply(self.embeddings,feat_value)
-self.x0 = tf.concat([self.numeric_value,tf.reshape(self.embeddings,shape=[-1,self.field_size * self.embedding_size])],axis=1)
-
-#deep part
-self.y_deep = tf.layers.dense(self.x0, activation="relu", use_bias=True)
-
-#cross part
-self._x0 = tf.reshape(self.x0, (-1, self.total_size, 1))
-x_l = self._x0
-for l in range(self.cross_layer_num):
-    x_l = tf.tensordot(tf.matmul(self._x0, x_l, transpose_b=True),self.weights["cross_layer_%d" % l],1) + self.weights["cross_bias_%d" % l] + x_l
-
-self.total_size = self.field_size * self.embedding_size + self.numeric_feature_size
-self.cross_network_out = tf.reshape(x_l, (-1, self.total_size))
-
-#训练
-concat_input = tf.concat([self.cross_network_out, self.y_deep], axis=1)
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=label))
-optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(loss)
-```
