@@ -13,7 +13,7 @@ tags:								# 标签
 FM(Factorization Machine，因子分解机)主要是为了解决数据稀疏的情况下，特征两两组合的问题。后人基于FM模型结合深度学习，进行了很多尝试，比如：
 1. FNN（Factorization-machine supported Neural
 Network），该模型先预训练FM，然后把得到的隐向量作为embedding的初始值，应用到DNN网络，因此该模型严重受限于FM的能力，并且FM的误差会级联传递下去。
-2. PNN（Product-based Neural Network），在embedding层和MLP之间加入Product层，Product层就是将embedding后的特征向量两两内积（向量内积的结果是一个值）。也只能捕获两两特征之间的交互关系。
+2. PNN（Product-based Neural Network），在embedding层和MLP之间加入Product层，Product层就是将embedding后的特征向量两两内积（向量内积又叫inner product，其结果就是两向量相乘，是一个值；向量外积又叫outer product，一个n维向量和一个m维向量的外积结果是一个n x m矩阵，也有些地方认为向量外积就是按位点乘）。也只能捕获两两特征之间的交互关系。
 3. Wide & Deep model，之前讲过，wide部分仍然需要专家级的特征工程，才能知道应该把哪些特征之间进行cross product。
 
 DeepFM（Factorization-Machine based neural network）模型能够端到端的学习all-order的特征交互，而不需要任何特征工程（一个特征叫1-order，两个特征cross叫2-order，n个特征cross叫n-order）。它通过将FM与DNN集成，FM负责model low-order特征交互，DNN负责model high-order特征交互。
