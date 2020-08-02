@@ -16,7 +16,7 @@ Transformer模型出自于Google在2017年的一篇论文《Attention Is All You
 ![transformer](/img/transformer-01.png)
 由于Transformer模型最初是用在机器翻译任务上，所以它和seq2seq一样，也是一种encoder-decoder架构。
 
-首先看左边的encoder部分，Nx表示有N层这样的Layer，每个Layer由两个sub-layer组成，分别是multi-head self-attention mechanism和fully-connected feed forward network。其中每个sub-layer都加了residual connection和normalisation。输入部分是Word Embedding和position Embedding的按位sum。
+首先看左边的encoder部分，Nx表示有N层这样的Layer，每个Layer由两个sub-layer组成，分别是multi-head self-attention mechanism和fully-connected feed forward network。其中每个sub-layer都加了residual connection（其实残差网络不光可以相加，还可以相减，目的是可以有效的仅关注差异部分）和normalisation。输入部分是Word Embedding和position Embedding的按位sum。
 
 Decoder和Encoder的结构类似，只是多了一层multi-head attention sub-layer，这里先明确一下decoder的输入输出和解码过程：
 1. 输出：对应i位置的输出词的概率分布。
@@ -101,7 +101,7 @@ z=K.dot(outputs,self.Wo)
 
 # Position-wise Feed-Forward
 
-其实就是采用Relu激活函数的全连接神经网络，复习一下，128个神经元的单层全连接神经网络，其实就是拥有128个1x1卷积核的卷积神经网络。
+其实就是采用Relu激活函数的全连接神经网络，复习一下，128个神经元的单层全连接神经网络，其实就是拥有128个1x1卷积核的卷积神经网络。通过该层可以提炼出head之间的feature interaction。
 
 # LayerNorm
 
