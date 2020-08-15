@@ -40,7 +40,7 @@ Airbnb利用用户的session级的短期兴趣（同session内的点击高度同
 ![AB](/img/AB-04.png)
 那么我们就可以用所有属性以及该属性的所有可能取值（用bucket id代替）组成一个list_type，比如说某个listing的国家是US、类型是Ent（bucket 1）、每晚的价格是56-59美金（bucket3），那么就可以用US_lt1_pn3来表示该listing的listing_type。user_type采用同样的做法：
 ![AB](/img/AB-05.png)
-从上表中可以看到Airbnb用的用户属性包括：device type、是否填了简介、有没有头像照片、之前定过的平均价位等等。
+从上表中可以看到Airbnb用的用户属性包括：device type、是否填了简介、有没有头像照片、之前定过的平均价位等等。细心的你可能发现中间画了一条线，表示如果一个用户没有过预订行为，其类别只用线上的五行属性，如果有预订行为，则用所有的属性。
 
 由于booking session集合的大小是远远小于click session的，而且大部分listing被book的次数也少的可怜，我们知道word2vec要训练出较稳定且有意义的embedding，item最少需要出现5-10次，但大量listing的book次数少于5次，我们采用上面做法，同一list_type或user_type的出现次数很大可能大于5，足以训练得到可靠的embedding。
 
