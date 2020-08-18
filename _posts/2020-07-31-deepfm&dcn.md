@@ -1,6 +1,6 @@
 ---
 layout:     post   				    # 使用的布局
-title:      55.0 基于深度学习的推荐系统——DeepFM & DCN		# 标题 
+title:      55.0 基于深度学习的推荐系统——DeepFM & DCN	& XDeepFM	# 标题 
 date:       2020-07-27  			# 时间
 author:     钱爽 						# 作者
 catalog: true 						# 是否归档
@@ -14,9 +14,9 @@ FM(Factorization Machine，因子分解机)主要是为了解决数据稀疏的�
 1. FNN（Factorization-machine supported Neural
 Network），该模型先预训练FM，然后把得到的隐向量作为embedding的初始值，应用到DNN网络，因此该模型严重受限于FM的能力，并且FM的误差会级联传递下去。
 2. PNN（Product-based Neural Network），在embedding层和MLP之间加入Product层，Product层就是将embedding后的特征向量两两内积（向量内积又叫inner product，其结果就是两向量相乘，是一个值；向量外积又叫outer product，一个n维向量和一个m维向量的外积结果是一个n x m矩阵，也有些地方认为向量外积就是按位点乘）。也只能捕获两两特征之间的交互关系。
-3. Wide & Deep model，之前讲过，wide部分仍然需要专家级的特征工程，才能知道应该把哪些特征之间进行cross product。
+3. 对于FM来说，先对特征的每一个field查找一个embedding向量，再进行交叉（点乘）。而对于FFM（Field-aware Factorization Machine）来说，先把特征之间的所有field取值两两组合（cross）好，再对于每一种组合去查找embedding向量表。
 
-DeepFM（Factorization-Machine based neural network）模型能够端到端的学习all-order的特征交互，而不需要任何特征工程（一个特征叫1-order，两个特征cross叫2-order，n个特征cross叫n-order）。它通过将FM与DNN集成，FM负责model low-order特征交互，DNN负责model high-order特征交互。
+Wide & Deep model，之前讲过，wide部分仍然需要专家级的特征工程，才能知道应该把哪些特征之间进行cross product。DeepFM（Factorization-Machine based neural network）模型能够端到端的学习all-order的特征交互，而不需要任何特征工程（一个特征叫1-order，两个特征cross叫2-order，n个特征cross叫n-order）。它通过将FM与DNN集成，FM负责model low-order特征交互，DNN负责model high-order特征交互。
 
 ## 模型架构
 
@@ -72,7 +72,7 @@ y_deep = tf.layers.dense(y_deep, activation="relu", use_bias=True)
 ```
 # 1-order
 y_first_order = tf.nn.embedding_lookup(weights['feature_bias'],feat_index)
-y_first_order = tf.reduce_sum(tf.multiply(y_first_order,feat_value),2) # None * f
+y_first_order = tf.reduce_sum(tf.multiply(y_first_order,feat_value),2) # None * f，进行了sum pooling操作，每一维特征变成了一个值
 
 # 2-order
 summed_features_emb = tf.reduce_sum(embeddings,1) # None * k
@@ -132,10 +132,32 @@ for l in range(self.cross_layer_num):
     x_l = tf.tensordot(tf.matmul(self._x0, x_l, transpose_b=True),self.weights["cross_layer_%d" % l],1) + self.weights["cross_bias_%d" % l] + x_l
 
 self.total_size = self.field_size * self.embedding_size + self.numeric_feature_size
-self.cross_network_out = tf.reshape(x_l, (-1, self.total_size))
+self.cross_network_out = tf.reshape(x_l, (-1, self.total_size)) # 进行了sum pooling操作，每一维特征变成了一个值
 
 #训练
 concat_input = tf.concat([self.cross_network_out, self.y_deep], axis=1)
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=label))
 optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(loss)
 ```
+
+# XDeepFM
+
+DCN的Cross层接在Embedding层之后，虽然可以显示自动构造有限高阶特征交叉，但它是以bit-wise的方式。即假设Age Field对应嵌入向量<a1,b1,c1>，Occupation Field对应嵌入向量<a2,b2,c2>，在Cross层，a1,b1,c1,a2,b2,c2会拼接后直接作为输入，这样就意识不到Field vector的概念。Cross 以嵌入向量中的单个bit为最细粒度，而FM的精髓是以向量为最细粒度学习相关性，即vector-wise。xDeepFM的动机，正是将FM的vector-wise的思想引入Cross部分。XDeepFM采用了CIN（Compressed Interaction Network，压缩交互网络）来做到这件事情。其网络结构如下：
+![XDeepFM](/img/XDeepFM-01.png)
+Linear部分以及Plain DNN部分与DeepFM一样，核心的就是CIN。CIN网络的宏观架构如下：
+![XDeepFM](/img/XDeepFM-02.png)
+这里的X0为原始特征embedding后的向量矩阵，m是filed size，D是embedding size。不难看出，CIN的结构与RNN很是类似，即每一层的状态是由前一层隐层状态X的值与一个额外的输入数据计算所得，不同的是：CIN中不同层的参数是不一样的，而在RNN中是相同的；RNN中每次额外的输入数据是不一样的，而CIN中额外的输入数据是固定的，始终是X0。具体计算过程如下图：
+![XDeepFM](/img/XDeepFM-03.png)
+![XDeepFM](/img/XDeepFM-04.png)
+相当于用Hk+1个尺寸为m x Hk的卷积核进行卷积操作。
+
+CIN与DCN中Cross层的设计动机是相似的，Cross层的input也是前一层加X0，其实目的都是自动构造有限高阶特征交叉。如第一层：
+![XDeepFM](/img/XDeepFM-05.png)
+第二层：
+![XDeepFM](/img/XDeepFM-06.png)
+第K-1层：
+![XDeepFM](/img/XDeepFM-07.png)
+不过CIN与Cross还是有几点差异的：
+1. Cross是bit-wise的，而CIN是vector-wise的。
+2. 在第l层，Cross包含从1阶～l+1阶的所有组合特征，而CIN只包含l+1阶的组合特征。所以CIN需要把每一层输出都concat起来。
+3. Cross在输出层输出全部结果，而CIN在每层都输出中间结果。中间结果经过sum pooling后到输出层。
