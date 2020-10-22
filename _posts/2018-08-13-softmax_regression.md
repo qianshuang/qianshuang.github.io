@@ -22,6 +22,8 @@ softmax回归的损失函数为交叉熵损失（Cross Entropy），交叉熵通
 ![softmax](/img/softmax-02.png)
 当只有两个类时（K=2，二分类问题），交叉熵损失跟逻辑回归的损失函数相等，所以逻辑回归是softmax回归在二分类时的特例，softmax回归是逻辑回归在多分类情况下的推广。
 
+<a href="https://www.cnblogs.com/shine-lee/p/12032066.html" target="_blank">直观理解为什么分类问题用交叉熵损失而不用均方误差损失?</a>
+
 # 模型训练
 
 ## sklearn版本
